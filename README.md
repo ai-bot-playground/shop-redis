@@ -1,10 +1,10 @@
 # Redis — gorąca ścieżka rezerwacji stocku
 
 Standardowy obraz `redis`, ale to repo trzyma jego konfigurację (`redis.conf`).
-`docker-compose.yml` (w repo shop-documentation) montuje ten plik i uruchamia
+`docker-compose.yml` (w repo shop-infra) montuje ten plik i uruchamia
 `redis-server /usr/local/etc/redis/redis.conf`.
 Najważniejszy element dla scenariusza „tysiące kupujących naraz". Używany głównie
-przez **shop-inwentory** (liczniki i rezerwacje), dodatkowo przez **shop-gateway**
+przez **shop-inventory** (liczniki i rezerwacje), dodatkowo przez **shop-gateway**
 (liczniki rate limitingu) i opcjonalnie cache w shop-catalog.
 
 ## Dlaczego Redis, a nie SQL
@@ -25,7 +25,7 @@ dekrementowania licznika bez wyścigów.
 
 Rezerwacja w **jednej** atomowej operacji: sprawdź dostępność, zmniejsz licznik,
 załóż klucz rezerwacji z TTL. Zwykłe „GET, sprawdź, DECR" z poziomu aplikacji to
-wyścig. Logikę i pseudokod opisuje README shop-inwentory. Zwolnienie (kompensacja)
+wyścig. Logikę i pseudokod opisuje README shop-inventory. Zwolnienie (kompensacja)
 to operacja odwrotna (`INCRBY` + `DEL`), również atomowa i idempotentna.
 
 ## TTL jako bezpiecznik
@@ -39,7 +39,7 @@ padnie, rezerwacja wygaśnie sama i stock wróci do puli.
 - `maxmemory-policy noeviction` — **nigdy** nie eksmituj liczników stocku
   (utrata licznika = błędna sprzedaż); przy braku pamięci zapis zwraca błąd.
 - `maxmemory 256mb` — limit dema; produkcyjnie dobierz do danych / Redis Cluster.
-- shop-inwentory rozgrzewa liczniki z Postgresa przy starcie i synchronizuje w tle.
+- shop-inventory rozgrzewa liczniki z Postgresa przy starcie i synchronizuje w tle.
 
 ## Skalowanie
 Redis Cluster z shardingiem po `productId`, repliki. Healthcheck: `redis-cli ping`.
